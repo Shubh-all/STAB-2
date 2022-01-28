@@ -2,23 +2,42 @@
 import datetime
 from operator import itemgetter
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+NavigationToolbar2Tk)
+
+from back_utility import back_utl
+from save_report import *
+import numpy as np
+from fix import *
+
 
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./assets")
 
 
+
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 
-def result_fn(root,possibleSolutions):
-
+def result_fn(root,possibleSolutions,corData,numSieves,numStockPiles,entries,sieve_entries,mainroot):
+    a = datetime.datetime.now()
+    numsol=len(possibleSolutions)
+    root.withdraw()
     window =Toplevel(root)
-    window.geometry("1280x720")
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    app_width = 1280
+    app_height = 720
+    x = (screen_width / 2) - (app_width / 2)
+    y = (screen_height / 2) - (app_height / 2)-30
+    window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
+    window.title("STAB")
     window.configure(bg="#FFFFFF")
 
     canvas = Canvas(
@@ -70,7 +89,7 @@ def result_fn(root,possibleSolutions):
         1176.0,
         28.0,
         anchor="nw",
-        text="Version 2.3",
+        text="Version 2.0",
         fill="#FFFFFF",
         font=("Inter Medium", 12 * -1)
     )
@@ -106,13 +125,13 @@ def result_fn(root,possibleSolutions):
         63.0,
         99.0,
         anchor="nw",
-        text="Define Stocks & Sieves",
+        text="Define StockPiles & Sieves",
         fill="#273340",
         font=("OpenSansRoman Regular", 12 * -1)
     )
 
     canvas.create_text(
-        205.0,
+        227.0,
         99.0,
         anchor="nw",
         text="Enter Values",
@@ -129,6 +148,89 @@ def result_fn(root,possibleSolutions):
         font=("OpenSansRoman Regular", 16 * -1)
     )
 
+    image_image_1 = PhotoImage(
+        file="assets/next_write.png")
+    image_1 = canvas.create_image(
+        215.0,
+        107.0,
+        image=image_image_1
+    )
+
+    image_image_2 = PhotoImage(
+        file="assets/IITR_Logo.png")
+    image_2 = canvas.create_image(
+        35.0,
+        40.0,
+        image=image_image_2
+    )
+
+    image_image_3 = PhotoImage(
+        file="assets/copyright.png")
+    image_3 = canvas.create_image(
+        1118.0,
+        55.0,
+        image=image_image_3
+    )
+
+    image_4 = canvas.create_image(
+        301.0,
+        107.0,
+        image=image_image_1
+    )
+
+    button_image_1 = PhotoImage(
+        file="assets/back_button.png")
+    button_1 = Button(
+        window,
+        image=button_image_1,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: back_utl(root, window),
+        relief="flat"
+    )
+    button_1.place(
+        x=20.0,
+        y=124.0,
+        width=28.0,
+        height=28.0
+    )
+
+    if(len(possibleSolutions)>0):
+        button_image_2 = PhotoImage(
+            file="assets/Filter_Solution_Button.png")
+        button_2 = Button(
+            window,
+            image=button_image_2,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: fix(window,possibleSolutions,corData,numSieves,numStockPiles,entries,sieve_entries,mainroot),
+            relief="flat"
+        )
+        button_2.place(
+            x=183.0,
+            y=385+(numStockPiles-1)*37.0,
+            width=108.0,
+            height=31.0
+        )
+
+        button_image_3 = PhotoImage(
+            file="assets/save_report_button.png")
+        button_3 = Button(
+            window,
+            image=button_image_3,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: saveresults(possibleSolutions,numSieves,numStockPiles),
+            relief="flat"
+        )
+        button_3.place(
+            x=377.0,
+            y=172,
+            width=108.0,
+            height=31.0
+        )
+
+    # Graph Canvas
     canvas.create_rectangle(
         342.0,
         291.0,
@@ -144,38 +246,6 @@ def result_fn(root,possibleSolutions):
         text="1",
         fill="#273340",
         font=("Inter Regular", 16 * -1)
-    )
-
-    button_image_1 = PhotoImage(
-        file=relative_to_assets("button_1.png"))
-    button_1 = Button(
-        image=button_image_1,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
-        relief="flat"
-    )
-    button_1.place(
-        x=659.0,
-        y=675.0,
-        width=25.0,
-        height=25.0
-    )
-
-    button_image_2 = PhotoImage(
-        file=relative_to_assets("button_2.png"))
-    button_2 = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
-        relief="flat"
-    )
-    button_2.place(
-        x=596.0,
-        y=675.0,
-        width=25.0,
-        height=25.0
     )
 
     canvas.create_text(
@@ -204,53 +274,7 @@ def result_fn(root,possibleSolutions):
         fill="#C1D6FF",
         outline="")
 
-    canvas.create_rectangle(
-        82.0,
-        444.0,
-        184.0,
-        473.0,
-        fill="#FFFFFF",
-        outline="")
 
-    canvas.create_rectangle(
-        82.0,
-        370.0,
-        184.0,
-        399.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        82.0,
-        518.0,
-        184.0,
-        547.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        82.0,
-        333.0,
-        184.0,
-        362.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        82.0,
-        481.0,
-        184.0,
-        510.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        82.0,
-        407.0,
-        184.0,
-        436.0,
-        fill="#FFFFFF",
-        outline="")
 
     canvas.create_rectangle(
         188.0,
@@ -260,53 +284,7 @@ def result_fn(root,possibleSolutions):
         fill="#C1D6FF",
         outline="")
 
-    canvas.create_rectangle(
-        188.0,
-        444.0,
-        290.0,
-        473.0,
-        fill="#FFFFFF",
-        outline="")
 
-    canvas.create_rectangle(
-        188.0,
-        370.0,
-        290.0,
-        399.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        188.0,
-        518.0,
-        290.0,
-        547.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        188.0,
-        333.0,
-        290.0,
-        362.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        188.0,
-        481.0,
-        290.0,
-        510.0,
-        fill="#FFFFFF",
-        outline="")
-
-    canvas.create_rectangle(
-        188.0,
-        407.0,
-        290.0,
-        436.0,
-        fill="#FFFFFF",
-        outline="")
 
     canvas.create_text(
         90.0,
@@ -314,7 +292,8 @@ def result_fn(root,possibleSolutions):
         anchor="nw",
         text="Stock",
         fill="#273340",
-        font=("OpenSansRoman Regular", 14 * -1)
+        font=("OpenSansRoman Regular", 14 * -1),
+        width=325.0,
     )
 
     canvas.create_text(
@@ -326,37 +305,6 @@ def result_fn(root,possibleSolutions):
         font=("OpenSansRoman Regular", 14 * -1)
     )
 
-    image_image_1 = PhotoImage(
-        file=relative_to_assets("image_1.png"))
-    image_1 = canvas.create_image(
-        194.0,
-        108.0,
-        image=image_image_1
-    )
-
-    image_image_2 = PhotoImage(
-        file=relative_to_assets("image_2.png"))
-    image_2 = canvas.create_image(
-        280.0,
-        108.0,
-        image=image_image_2
-    )
-
-    button_image_3 = PhotoImage(
-        file=relative_to_assets("button_3.png"))
-    button_3 = Button(
-        image=button_image_3,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_3 clicked"),
-        relief="flat"
-    )
-    button_3.place(
-        x=20.0,
-        y=124.0,
-        width=28.0,
-        height=28.0
-    )
 
     canvas.create_text(
         78.0,
@@ -375,20 +323,31 @@ def result_fn(root,possibleSolutions):
         fill="#000000",
         outline="")
 
-    canvas.create_text(
-        300.0,
-        173.0,
-        anchor="nw",
-        text="16",
-        fill="#273340",
-        font=("OpenSansRoman SemiBold", 20 * -1)
-    )
+    if(numsol>0):
+        canvas.create_text(
+            300.0,
+            173.0,
+            anchor="nw",
+            text=numsol,
+            fill="#273340",
+            font=("OpenSansRoman SemiBold", 20 * -1)
+        )
+    else:
+        canvas.create_text(
+            300.0,
+            173.0,
+            anchor="nw",
+            text="No Solution Possible",
+            fill="#FF5A5A",
+            font=("OpenSansRoman SemiBold", 20 * -1)
+        )
+
 
     canvas.create_text(
         78.0,
         212.0,
         anchor="nw",
-        text="Best Solution (1)",
+        text="Best Solution",
         fill="#273340",
         font=("OpenSansRoman Regular", 18 * -1)
     )
@@ -417,20 +376,129 @@ def result_fn(root,possibleSolutions):
         fill="#000000",
         outline="")
 
-    image_image_3 = PhotoImage(
-        file=relative_to_assets("image_3.png"))
-    image_3 = canvas.create_image(
-        35.0,
-        40.0,
-        image=image_image_3
-    )
 
-    image_image_4 = PhotoImage(
-        file=relative_to_assets("image_4.png"))
-    image_4 = canvas.create_image(
-        1118.0,
-        55.0,
-        image=image_image_4
-    )
+
+    if (numsol > 0):
+        x1 = 82
+        x2 = 188
+        x3=184
+        x4=290
+        y1 = 333
+        y2=362
+
+        for i in range(0, numStockPiles):
+            # print(x1,y1)
+            canvas.create_rectangle(
+                x1,
+                y1,
+                x3,
+                y2,
+                fill="#FFFFFF",
+                outline="")
+
+            # print(x1+8,y1+2)
+            canvas.create_text(
+                x1 + 8,
+                y1 + 6,
+                anchor="nw",
+                text="Stock " + str(i + 1),
+                fill="#283341",
+                font=("OpenSansRoman Regular", 14 * -1),
+                width=325.0,
+            )
+
+            canvas.create_rectangle(
+                x2,
+                y1,
+                x4,
+                y2,
+                fill="#FFFFFF",
+                outline="")
+
+            # print(x2+8,y1+2)
+            canvas.create_text(
+                x2 + 8,
+                y1 + 6,
+                anchor="nw",
+                text=possibleSolutions[0]['Solution'][i],
+                fill="#283341",
+                font=("OpenSansRoman Regular", 14 * -1),
+                width=325.0,
+            )
+            y1 += 37
+            y2+=37
+
+################################################################## GRAPH ##################################################################
+    # print(type(corData))
+    # print(corData,len(corData),len(corData[0]))
+
+    low_lim=[]
+    for i in range(0,numSieves):
+        low_lim.append(corData[i][0])
+    up_lim = []
+    for i in range(0, numSieves):
+        up_lim.append(corData[i][1])
+
+    x=[]
+    for i in range(1,numSieves+1):
+        x.append(i)
+
+    fig = Figure(figsize=(5,3))
+    plot1 = fig.add_subplot(111)
+    # plot1.xlabel("Sieve Number")
+    # plot1.ylabel("Percentage")
+    # plotting the graph
+    plot1.scatter(x,low_lim)
+    plot1.plot(x,low_lim,label="Lower Limit")
+    plot1.scatter(x, up_lim)
+    plot1.plot(x,up_lim,label="Upper Limit")
+
+    if (numsol > 0):
+        sol = []
+
+        for i in range(0,numSieves):
+            sol.append(possibleSolutions[0]['val'][i])
+        plot1.scatter(x,sol)
+        plot1.plot(x,sol,label="Possible Solution")
+
+    # creating the Tkinter canvas
+    # containing the Matplotlib figure
+    plot1.legend()
+    canvas = FigureCanvasTkAgg(fig,
+                               master=window)
+    canvas.draw()
+
+    # placing the canvas on the Tkinter window
+    canvas.get_tk_widget().place(x=342,y=291)
+
+    # bar1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+    # creating the Matplotlib toolbar
+    toolbar = NavigationToolbar2Tk(canvas,
+                                   window)
+    toolbar.update()
+
+    # toolbar.config(background="#3888FF")
+    #
+    # for button in toolbar.winfo_children():
+    #     button.config(background="#FFFFFF",foreground="#FFFFFF")
+
+    # placing the toolbar on the Tkinter window
+    canvas.get_tk_widget().place(x=342,y=291)
+
+################################################################## GRAPH ##################################################################
+
+
+    b = datetime.datetime.now()
+    print("Result Page Time",b-a)
+
+
+    def on_closing():
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            mainroot.destroy()
+
+    window.protocol("WM_DELETE_WINDOW", on_closing)
+
     window.resizable(False, False)
+    window.mainloop()
 
